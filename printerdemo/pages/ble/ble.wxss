@@ -1,0 +1,6 @@
+/* pages/ble/ble.wxss */
+
+button {
+  width: 96% !important;
+  margin-top: 30rpx;
+}

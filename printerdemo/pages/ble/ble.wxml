@@ -1,0 +1,13 @@
+<!--pages/ble/ble.wxml-->
+<view class="page-body">
+  <view wx:for='{{deviceList}}' wx:key="deviceId" data-index='{{index}}'>
+    <button type="default" data-deviceId='{{item.deviceId}}' bindtap="testPrint">
+      {{ item.name + ' (' + item.RSSI + ')' }}
+    </button>
+  </view>
+  <view>
+    <scroll-view scroll-x="true" scroll-y="true" style="width: 0; height: 0;">
+      <canvas id="myCanvas" canvas-id="myCanvas" style="width: 2000px; height: 3000px;"></canvas>
+    </scroll-view>
+  </view>
+</view>
