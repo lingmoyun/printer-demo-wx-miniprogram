@@ -2,7 +2,7 @@
  * Create by Winford
  */
 
-//const HexByteUtil = require('./hex_byte_util.js');
+//const HEX = require('./HEX.min.js');
 const uni = wx;
 
 // 请求权限蓝牙
@@ -298,7 +298,7 @@ const connect = async ({
 
 	// 写方法
 	device.write = async (value, mtu) => {
-		// console.log(device.deviceId, 'write', HexByteUtil.ab2hex(value));
+		// console.log(device.deviceId, 'write', HEX.ab2hex(value));
 		if (device.writeCharacteristicId) {
 			await _writeBLECharacteristicValue(device.deviceId, device.serviceId, device
 				.writeCharacteristicId, value, mtu);

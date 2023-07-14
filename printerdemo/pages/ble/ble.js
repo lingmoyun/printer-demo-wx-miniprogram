@@ -1,7 +1,7 @@
 // pages/ble/ble.js
 const Bluetooth = require("../../util/bluetooth.js");
 const CPCL = require("../../util/CPCL.min.js");
-const HexByteUtil = require("../../util/hex_byte_util.js");
+const HEX = require("../../util/HEX.min.js");
 const uni = wx;
 
 Page({
@@ -137,7 +137,7 @@ Page({
     // clearTimeout(timeoutID);
     console.log('cpcl finish => ', new Date());
     console.log('cpcl => ', cpcl.byteLength);
-    console.log(HexByteUtil.ab2hex(cpcl))
+    console.log(HEX.ab2hex(cpcl))
     uni.hideLoading();
     return cpcl;
   },
@@ -238,7 +238,7 @@ Page({
       'TEXT 24 0 70 910 货物运费的最高5倍赔偿（货损除外）。\n' +
       'FORM\n' +
       'PRINT\n';
-    let cpcl = HexByteUtil.str2ab(cpclStr);
+    let cpcl = HEX.str2ab(cpclStr);
     return cpcl;
   },
   async connect(deviceId) {
@@ -272,9 +272,9 @@ Page({
     let onBLECharacteristicValueChange = function (res) {
       let buffer = res.value; // ArrayBuffer
       let data = new Uint8Array(buffer);
-      let hex = HexByteUtil.ab2hex(buffer);
+      let hex = HEX.ab2hex(buffer);
       console.log(`收到数据(hex)--->${hex}`);
-      let str = HexByteUtil.ab2str(buffer);
+      let str = HEX.ab2str(buffer);
       console.log(`收到数据(str)--->${str}`);
 
       // *****粘包处理开始**************************************************************************
@@ -287,7 +287,7 @@ Page({
           buf = [b];
         }
         if (b === 0x7D) { // '}'
-          let jsonStr = HexByteUtil.ab2str(new Uint8Array(buf).buffer);
+          let jsonStr = HEX.ab2str(new Uint8Array(buf).buffer);
           resJsons.push(jsonStr);
           buf = undefined;
         }
