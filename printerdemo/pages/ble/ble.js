@@ -40,8 +40,8 @@ Page({
       });
     });
   },
-
-  async getCanvasImageData(imgPath) {
+  // imgPath -> CanvasImageData
+  async imgPath2CanvasImageData(imgPath) {
     // 获取图片信息
     let imgInfo = await new Promise((resolve, reject) => {
       uni.getImageInfo({
@@ -49,7 +49,6 @@ Page({
         success: resolve
       });
     })
-
     // 获取在画布上绘图的环境
     const ctx = uni.createCanvasContext('myCanvas');
     // 填充白色底色，否则透明png图片打印出来会全黑
@@ -70,6 +69,40 @@ Page({
       })
     })
   },
+  // 生成图片并获取Canvas的ImageData
+  async generateCanvasImageData() {
+    // 定义画布宽高
+    const width = 400
+    const height = 200
+    // 获取在画布上绘图的环境
+    const ctx = uni.createCanvasContext('myCanvas');
+    // 填充白色底色，否则透明png图片打印出来会全黑
+    ctx.setFillStyle('white')
+    ctx.fillRect(0, 0, width, height)
+    // 在画布上绘制被填充的文本
+    ctx.setFillStyle('black')
+    ctx.setFontSize(20)
+    ctx.fillText('Hello', 20, 50)
+    ctx.setFontSize(26)
+    ctx.fillText('Winford', 100, 100)
+    ctx.setStrokeStyle('black')
+    ctx.strokeRect(80, 60, 130, 60)
+    // 更多使用示例参考官方文档：https://developers.weixin.qq.com/miniprogram/dev/api/canvas/CanvasContext.html
+
+    await new Promise((resolve, reject) => ctx.draw(false, resolve))
+    // 获取画布上的图像像素矩阵
+    return new Promise((resolve, reject) => {
+      uni.canvasGetImageData({
+        canvasId: 'myCanvas',
+        x: 0,
+        y: 0,
+        width,
+        height,
+        success: resolve
+      })
+    })
+  },
+  // 使用SDK(CPCL.js)构建指令
   async cpcl0() {
     uni.showLoading({
       title: '正在处理图片...',
@@ -78,13 +111,13 @@ Page({
     // === 本地图片打印 ===
     // let imgPath = "../../static/test.jpg"
     // === 选择图片打印 ===
-    let imgPath = await new Promise((resolve, reject) => {
-      uni.chooseImage({
-        count: 1,
-        sizeType: ['original'],
-        success: res => resolve(res.tempFilePaths[0])
-      })
-    })
+    // let imgPath = await new Promise((resolve, reject) => {
+    //   uni.chooseImage({
+    //     count: 1,
+    //     sizeType: ['original'],
+    //     success: res => resolve(res.tempFilePaths[0])
+    //   })
+    // })
     // === 网络图片打印 ===
     // let url = 'https://web-assets.dcloud.net.cn/unidoc/zh/uni@2x.png'
     // let imgPath = await new Promise((resolve, reject) => {
@@ -108,39 +141,37 @@ Page({
     // })
 
     // 获取ImageData
-    let canvasImageData = await this.getCanvasImageData(imgPath);
+    // let canvasImageData = await this.imgPath2CanvasImageData(imgPath);
     // 删除BASE64临时保存的文件
     // uni.getFileSystemManager().unlink({filePath: imgPath})
-    console.log('canvasImageData => ', canvasImageData.width, canvasImageData.height);
 
+    // === Canvas生成图片打印 ===
+    let canvasImageData = await this.generateCanvasImageData();
+
+    console.log('canvasImageData => ', canvasImageData.width, canvasImageData.height);
     uni.showLoading({
       title: '正在生成指令...',
       mask: true,
     });
-    // let timeoutID = setTimeout(function() {
-    // 	uni.showLoading({
-    // 		title: '正在生成指令，小程序调试模式下比较耗时...',
-    // 		mask: true,
-    // 	});
-    // }, 2000);
-    // 构建CPCL指令
+    // 构建CPCL指令，更多使用方式见cpcl-sdk-demo-js，下载地址：http://open.lingmoyun.com/#/sdkDownload
     console.log('cpcl start => ', new Date());
+    // 构建CPCL指令               整体偏移量 高度 打印份数
     let cpcl = CPCL.Builder.createArea(0, 2376, 1)
+      // 任务ID，这里传什么打印结果会原样携带返回
       .taskId('1')
+      // 页面宽度，单位：点
       .pageWidth(1680)
-      // .text(0, 55, 3, 100, 500, 'HelloWorld')
-      // .text(0, 24, 0, 100, 600, 'HelloWorld')
-      // .imageCG(canvasImageData, 10, 10) // 小程序调试模式下比较耗时，体验版、正式版正常。
+      // 打印图片 Canvas的ImageData x y
       .imageGG(canvasImageData, 10, 10) // 小程序调试模式下比较耗时，体验版、正式版正常。
       .formPrint()
       .build();
-    // clearTimeout(timeoutID);
     console.log('cpcl finish => ', new Date());
     console.log('cpcl => ', cpcl.byteLength);
     console.log(HEX.ab2hex(cpcl))
     uni.hideLoading();
     return cpcl;
   },
+  // 纯手写指令
   cpcl1() {
     let cpclStr = '! 0 200 200 1040 1\n' +
       'TEXT 55 3 130 40 物流发货单（普运）\n' +
