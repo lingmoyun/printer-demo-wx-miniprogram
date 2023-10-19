@@ -5,9 +5,10 @@
       {{ item.name + ' (' + item.RSSI + ')' }}
     </button>
   </view>
-  <view>
+  <!-- 已废弃，请使用新版API -->
+  <!-- <view>
     <scroll-view scroll-x="true" scroll-y="true" style="width: 0; height: 0;">
       <canvas id="myCanvas" canvas-id="myCanvas" style="width: 2000px; height: 3000px;"></canvas>
     </scroll-view>
-  </view>
+  </view> -->
 </view>

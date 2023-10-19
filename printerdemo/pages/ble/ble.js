@@ -40,7 +40,7 @@ Page({
       });
     });
   },
-  // imgPath -> CanvasImageData
+  // 已废弃，请使用新版API，imgPath -> CanvasImageData
   async imgPath2CanvasImageData(imgPath) {
     // 获取图片信息
     let imgInfo = await new Promise((resolve, reject) => {
@@ -69,8 +69,8 @@ Page({
       })
     })
   },
-  // 生成图片并获取Canvas的ImageData
-  async generateCanvasImageData() {
+  // 已废弃，请使用新版API，生成图片并获取Canvas的ImageData
+  async generateCanvasImageDataOld() {
     // 定义画布宽高
     const width = 400
     const height = 200
@@ -101,6 +101,85 @@ Page({
         success: resolve
       })
     })
+  },
+  // 生成图片并获取Canvas的ImageData
+  async generateCanvasImageData() {
+    // 定义画布宽高
+    const width = 1680 // A4 wigth 210mm 203DPI
+    const height = 2376 // A4 height 297mm 203DPI
+    // const width = 2480 // A4 wigth 210mm 300DPI
+    // const height = 3508 // A4 height 297mm 300DPI
+    // 创建离屏 2D canvas 实例
+    const canvas = uni.createOffscreenCanvas({type: '2d', width: width, height: height})
+    // 获取 context。注意这里必须要与创建时的 type 一致
+    const ctx = canvas.getContext('2d')
+
+    // 填充白色底色，否则透明png图片打印出来会全黑
+    ctx.fillStyle = 'white'
+    ctx.fillRect(0, 0, width, height)
+    // 在画布上绘制被填充的文本
+    ctx.fillStyle = 'black'
+    ctx.font = '16px'
+    ctx.fillText('Hello', 20, 50)
+    ctx.font = '26px'
+    ctx.fillText('Winford', 100, 100)
+    ctx.strokeStyle = 'black'
+    ctx.strokeRect(80, 60, 130, 60)
+
+    // 创建一个图片
+    const image = canvas.createImage()
+    // === 本地图片打印 ===
+    // 等待图片加载
+    await new Promise(resolve => {
+      image.onload = resolve
+      image.src = '../../static/test.jpg' // 要加载的图片 url
+    })
+    // 把图片画到离屏 canvas 上
+    ctx.drawImage(image, 30, 200, image.width, image.height)
+
+    // === 网络图片打印 ===
+    // 等待图片加载
+    await new Promise(resolve => {
+      image.onload = resolve
+      image.src = 'https://web-assets.dcloud.net.cn/unidoc/zh/uni@2x.png' // 要加载的图片 url
+    })
+    // 把图片画到离屏 canvas 上
+    ctx.drawImage(image, 400, 200, image.width, image.height)
+
+    // === BASE64编码图片打印 ===
+    // 等待图片加载
+    await new Promise(resolve => {
+      image.onload = resolve
+      image.src = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACgAAAAoCAYAAACM/rhtAAAAAXNSR0IArs4c6QAAAglJREFUWEfNmFGOgzAMRJOTlZ6M9mS0J8tqkIxSGnsmgV2Wv6rBeR7Hxk4upZQkPq/XKz2fz201ftszTVO63W7rz8fjIVrky7ICiA3f73eqgZjpeZ5PgQ0BAXS/3xlL+D9AjyjqAsJoHc5DlCmlUdAmIFTrCacKPwL5BfhbcOZEL+QHoBpWZCwebGZK9yTRsizJbDD1N0AFTvFesQM4QCrPBphzdtfDIOBUr60WRkmmOAs7KyDzuqOWfzh5ht0VMFJP9dSTP0o65SzmZVmKV4yPwgE6KvbKWczzPBfvrIyGdq9mpCLbI0/TVFpFWfFOyUKmIguzC3hGeM2BKMwUMKXUbLfOBFzLhVPG2D4ofk1A5pkaXlvnnUMK6J1B9mIvoKcgE+LyJBnOYijEXlZVjL4obI+wUDP5jwIqpSz81CkGGGSknnLOV8Co0itGPEg207Dwbt0MMzQCaSOqNzqoNrd+kLX6qkGlF+xJwA2QqVjPFAZRh9aUQuPBBq4eZz9mEhWyBkMiMaD9Ge25hfia6lgXzLK293+mZnMu/k+Q7s3CSLg99aASG0s9Jenl0RE1601ZlYBzLUgKaKrYBRC7r6mH+npMVSOyh5QBWyXFstdA2NysRqOGHALszdR6fS/knwOqXxqsQzd1CaAKiSNzGaACibN4KSCDvDTELHGsm79cwbrOosbur/p+AOSh+VvOQpJrAAAAAElFTkSuQmCC' // 要加载的图片 url
+    })
+    // 把图片画到离屏 canvas 上
+    ctx.drawImage(image, 430, 400, 50, 50) // 缩放到指定尺寸
+    // ctx.drawImage(image, 430, 400, image.width, image.height) // 原图尺寸
+
+    // Canvas更多使用方法参考官方文档：
+    // https://developers.weixin.qq.com/miniprogram/dev/api/canvas/OffscreenCanvas.html
+    // https://developers.weixin.qq.com/miniprogram/dev/api/canvas/RenderingContext.html
+    // https://whatwg-cn.github.io/html/#2dcontext
+
+    // 获取画完后的数据
+    return ctx.getImageData(0, 0, width, height) // 打印整个画布
+
+    // // === 大尺寸图片测试 ===
+    // // 等待图片加载
+    // await new Promise(resolve => {
+    //   image.onload = resolve
+    //   image.src = 'https://lmy-file.oss-cn-hangzhou.aliyuncs.com/tmp/winford/test/a4_doc_300dpi.jpeg' // 要加载的图片 url
+    //   // image.src = 'https://lmy-file.oss-cn-hangzhou.aliyuncs.com/tmp/winford/test/a4_photo_300dpi.png' // 要加载的图片 url
+    // })
+    // // 清空画布
+    // ctx.fillStyle = 'white'
+    // ctx.fillRect(0, 0, width, height)
+    // // 把图片画到离屏 canvas 上
+    // ctx.drawImage(image, 0, 0, width, height) // 缩放到指定尺寸
+    // // ctx.drawImage(image, 0, 0, image.width, image.height) // 原图尺寸
+    //
+    // // 获取画完后的数据
+    // return ctx.getImageData(0, 0, image.width, image.height) // 仅打印图片
   },
   // 使用SDK(CPCL.js)构建指令
   async cpcl0() {
@@ -140,14 +219,18 @@ Page({
     // 	})
     // })
 
-    // 获取ImageData
+    // 已废弃，请使用新版API，获取ImageData
     // let canvasImageData = await this.imgPath2CanvasImageData(imgPath);
     // 删除BASE64临时保存的文件
     // uni.getFileSystemManager().unlink({filePath: imgPath})
 
-    // === Canvas生成图片打印 ===
+    // === 已废弃，请使用新版API，Canvas生成图片打印(旧版API) ===
+    // let canvasImageData = await this.generateCanvasImageDataOld();
+ 
+    // === Canvas生成图片打印(OffscreenCanvas) ===
     let canvasImageData = await this.generateCanvasImageData();
 
+    // console.log('canvasImageData => ', [...canvasImageData.data]);
     console.log('canvasImageData => ', canvasImageData.width, canvasImageData.height);
     uni.showLoading({
       title: '正在生成指令...',
@@ -156,14 +239,14 @@ Page({
     // 构建CPCL指令，更多使用方式见cpcl-sdk-demo-js，下载地址：http://open.lingmoyun.com/#/sdkDownload
     console.log('cpcl start => ', new Date());
     // 构建CPCL指令               整体偏移量 高度 打印份数
-    let cpcl = CPCL.Builder.createArea(0, 2376, 1)
-      // 任务ID，这里传什么打印结果会原样携带返回
+    let cpcl = CPCL.Builder.createArea(0, 2376, 1) // ! 0 203 203 2376 1\n
+      // 任务ID，这里传什么打印结果会原样携带返回，部分打印机支持
       .taskId('1')
       // 页面宽度，单位：点
-      .pageWidth(1680)
+      .pageWidth(1680) // PW 1680\n
       // 打印图片 Canvas的ImageData x y
-      .imageGG(canvasImageData, 10, 10) // 小程序调试模式下比较耗时，体验版、正式版正常。
-      .formPrint()
+      .imageGG(canvasImageData, 0, 0) // 小程序调试模式下比较耗时，体验版、正式版正常。
+      .formPrint() // FORM\nPRINT\n
       .build();
     console.log('cpcl finish => ', new Date());
     console.log('cpcl => ', cpcl.byteLength);
@@ -272,6 +355,46 @@ Page({
     let cpcl = HEX.str2ab(cpclStr);
     return cpcl;
   },
+  // 从服务端获取指令
+  async cpcl2() {
+    // 服务端以BASE64格式返回，推荐
+    let cpclBase64Str = await new Promise(resolve => {
+      wx.request({
+        url: 'example.php', //仅为示例，并非真实的接口地址
+        data: {
+          type: 'BASE64'
+        },
+        header: {
+          'content-type': 'application/json' // 默认值
+        },
+        success (res) {
+          console.log(res.data)
+          resolve(res.data.cpcl)
+        }
+      })
+    })
+    let cpcl = wx.base64ToArrayBuffer(cpclBase64Str)
+
+    // 服务端以HEX格式返回，不推荐
+    // let cpclHexStr = await new Promise(resolve => {
+    //   wx.request({
+    //     url: 'example.php', //仅为示例，并非真实的接口地址
+    //     data: {
+    //       type: 'HEX'
+    //     },
+    //     header: {
+    //       'content-type': 'application/json' // 默认值
+    //     },
+    //     success (res) {
+    //       console.log(res.data)
+    //       resolve(res.data.cpcl)
+    //     }
+    //   })
+    // })
+    // let cpcl = HEX.hex2ab(cpclHexStr)
+    
+    return cpcl
+  },
   async connect(deviceId) {
     if (
       this.data.device &&
@@ -378,8 +501,12 @@ Page({
     await this.connect(deviceId);
 
     // CPCL指令
+    // 一、本地SDK生成指令
     let cpcl = await this.cpcl0();
+    // 二、本地手动拼写指令
     // let cpcl = this.cpcl1();
+    // 三、服务器生成指令
+    // let cpcl = await this.cpcl2();
 
     uni.showLoading({
       title: '正在发送指令...',
