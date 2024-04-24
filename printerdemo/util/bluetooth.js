@@ -103,6 +103,9 @@ const _getBLEDeviceCharacteristics = (deviceId, serviceId) => {
 						characteristics.write = characteristics.write || item;
 					}
 
+					if (item.uuid.startsWith('0000FF03')) {
+						characteristics.dataFC = characteristics.dataFC || item;
+					}
 				}
 				resolve(characteristics);
 			},
@@ -172,6 +175,36 @@ const _writeBLECharacteristicValue = async (deviceId, serviceId, characteristicI
 
 }
 
+// 写数据
+const _writeBLECharacteristicValueWithDataFC = async (device, value) => {
+	// const data = value.slice(); // copy一份，浅拷贝
+	const total = value.byteLength;
+	console.log('total--->', total);
+	let num = 0;
+	let count = 0;
+	const dataFC = device.dataFC;
+	while (count < total) {
+		if (dataFC.mtu > 0 && dataFC.credit > 0) {
+			const subData = value.slice(count, count + dataFC.mtu - 3); // 取出MTU-3个数据
+			if (subData.byteLength === 0) break; // 表示已经发送完毕
+			count = count + subData.byteLength;
+
+			dataFC.credit--;
+			_wxWriteBLECharacteristicValue({
+				deviceId: device.deviceId,
+				serviceId: device.serviceId,
+				characteristicId: device.writeCharacteristicId,
+				value: subData,
+			});
+			num++;
+		} else {
+			// 令牌用尽，等待令牌
+			await sleep(0);
+		}
+	}
+	console.log('num--->', num);
+}
+
 
 // 发现设备
 const find = (onBluetoothDeviceFound) => {
@@ -207,6 +240,10 @@ const connect = async ({
 		onBLEConnectionStateChange,
 		onBLECharacteristicValueChange,
 		onDataFCValueChange,
+		dataFC: {
+			mtu: 0,
+			credit: 0,
+		},
 	};
 
   // 请求蓝牙权限
@@ -266,16 +303,48 @@ const connect = async ({
 		device.notifyCharacteristicId = characteristics.notify ? characteristics.notify.uuid : '';
 		// 写
 		device.writeCharacteristicId = characteristics.write ? characteristics.write.uuid : '';
+	  // 流控
+	  device.dataFCCharacteristicId = characteristics.dataFC ? characteristics.dataFC.uuid : '';
 	}).catch(function(err) {
 		console.log(err);
 	});
 
+	device.mtu = 20;
+	if (uni.getSystemInfoSync().platform === 'android') {
+		uni.onBLEMTUChange(function (res) {
+			device.mtu = res.mtu;
+			console.log('bluetooth mtu is', res.mtu)
+		})
+		uni.setBLEMTU({
+			deviceId: deviceId,
+			mtu: 512,
+			success(res) {
+				device.mtu = res.mtu;
+				console.log('setBLEMTU success', res);
+			},
+			fail(res) {
+				console.log('setBLEMTU fail', res);
+			},
+		});
+	}
+
 	console.log('onBLECharacteristicValueChange')
 	// 监听
 	uni.onBLECharacteristicValueChange(function(res) {
-		if (res.characteristicId === device.notifyCharacteristicId && device
-			.onBLECharacteristicValueChange) {
-			device.onBLECharacteristicValueChange(res);
+		// 读监听
+		if (res.characteristicId === device.notifyCharacteristicId) {
+			device.onBLECharacteristicValueChange && device.onBLECharacteristicValueChange(res);
+		}
+		// 流控监听
+		if (res.characteristicId === device.dataFCCharacteristicId) {
+			const data = new Uint8Array(res.value);
+			const flag = data[0];
+			if (flag === 1) {
+				device.dataFC.credit += data[1];
+			} else if (flag === 2) {
+				device.dataFC.mtu = (data[2] << 8) + data[1]; // 低位在前，高位在后
+			}
+			device.onDataFCValueChange && device.onDataFCValueChange(res);
 		}
 	});
 
@@ -295,13 +364,36 @@ const connect = async ({
 			}
 		});
 	}
+	// 流控监听
+	if (device.dataFCCharacteristicId) {
+		uni.notifyBLECharacteristicValueChange({
+			state: true, // 启用 notify 功能
+			// 这里的 deviceId 需要已经通过 createBLEConnection 与对应设备建立链接
+			deviceId: device.deviceId,
+			// 这里的 serviceId 需要在 getBLEDeviceServices 接口中获取
+			serviceId: device.serviceId,
+			// 这里的 characteristicId 需要在 getBLEDeviceCharacteristics 接口中获取
+			characteristicId: device.dataFCCharacteristicId,
+			success(res) {
+				//console.log(device.deviceId, res.errMsg);
+			}
+		});
+	}
 
 	// 写方法
-	device.write = async (value, mtu) => {
-		// console.log(device.deviceId, 'write', HEX.ab2hex(value));
-		if (device.writeCharacteristicId) {
-			await _writeBLECharacteristicValue(device.deviceId, device.serviceId, device
-				.writeCharacteristicId, value, mtu);
+	// device.write = async (value, mtu) => {
+	// 	// console.log(device.deviceId, 'write', HEX.ab2hex(value));
+	// 	if (device.writeCharacteristicId) {
+	// 		await _writeBLECharacteristicValue(device.deviceId, device.serviceId, device
+	// 			.writeCharacteristicId, value, mtu);
+	// 	}
+	// };
+
+	// 流控写方法(传输速度提升6倍)
+	device.write = async (value) => {
+		// console.log(device.deviceId, 'writeWithDataFC', HEX.ab2hex(value));
+		if (device.writeCharacteristicId && device.dataFCCharacteristicId) {
+			await _writeBLECharacteristicValueWithDataFC(device, value);
 		}
 	};
 
