@@ -238,12 +238,13 @@ Page({
     });
     // 构建CPCL指令，更多使用方式见cpcl-sdk-demo-js，下载地址：http://open.lingmoyun.com/#/sdkDownload
     console.log('cpcl start => ', new Date());
+    const dpi = 203; // 打印机DPI
     // 构建CPCL指令               整体偏移量 高度 打印份数
     let cpcl = CPCL.Builder.createArea(0, 2376, 1) // ! 0 203 203 2376 1\n
       // 任务ID，这里传什么打印结果会原样携带返回，部分打印机支持
       .taskId('1')
-      // 页面宽度，单位：点
-      .pageWidth(1680) // PW 1680\n
+      // 固定写法，无需修改
+      .pageWidth(dpi == 203 ? 1728 : 2592)
       // 打印图片 Canvas的ImageData x y
       .imageGG(canvasImageData, 0, 0) // 小程序调试模式下比较耗时，体验版、正式版正常。
       .formPrint() // FORM\nPRINT\n
