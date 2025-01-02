@@ -309,17 +309,17 @@ const connect = async ({
 		console.log(err);
 	});
 
-	device.mtu = 20;
+	// device.mtu = 20;
 	if (uni.getSystemInfoSync().platform === 'android') {
 		uni.onBLEMTUChange(function (res) {
-			device.mtu = res.mtu;
+			// device.mtu = res.mtu;
 			console.log('bluetooth mtu is', res.mtu)
 		})
 		uni.setBLEMTU({
 			deviceId: deviceId,
 			mtu: 512,
 			success(res) {
-				device.mtu = res.mtu;
+				// device.mtu = res.mtu;
 				console.log('setBLEMTU success', res);
 			},
 			fail(res) {
