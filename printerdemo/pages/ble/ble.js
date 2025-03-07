@@ -175,11 +175,18 @@ Page({
     // ctx.fillStyle = 'white'
     // ctx.fillRect(0, 0, width, height)
     // // 把图片画到离屏 canvas 上
-    // ctx.drawImage(image, 0, 0, width, height) // 缩放到指定尺寸
+    // // 原图尺寸
     // // ctx.drawImage(image, 0, 0, image.width, image.height) // 原图尺寸
-    //
-    // // 获取画完后的数据
-    // return ctx.getImageData(0, 0, image.width, image.height) // 仅打印图片
+    // // return ctx.getImageData(0, 0, image.width, image.height) // 获取画完后的数据
+    // // 缩放到画布尺寸(非等比，强制拉伸)
+    // // ctx.drawImage(image, 0, 0, width, height) // 缩放到画布尺寸(非等比)
+    // // return ctx.getImageData(0, 0, width, height) // 获取画完后的数据
+    // // 等比例缩放到画布尺寸
+    // const ratio = Math.min(width / image.width, height / image.height);
+    // const targetWidth = Math.floor(image.width * ratio);
+    // const targetHeight = Math.floor(image.height * ratio);
+    // ctx.drawImage(image, 0, 0, targetWidth, targetHeight) // 等比例缩放
+    // return ctx.getImageData(0, 0, targetWidth, targetHeight) // 获取画完后的数据
   },
   // 使用SDK(CPCL.js)构建指令
   async cpcl0() {
