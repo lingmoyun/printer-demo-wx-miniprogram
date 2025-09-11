@@ -68,7 +68,7 @@ const _getBLEDeviceServices = (deviceId) => {
 			success: (res) => {
 				for (let i = 0; i < res.services.length; i++) {
 					let service = res.services[i];
-					if (service.isPrimary) {
+					if (service.uuid.startsWith('0000FF00')) {
 						resolve(service);
 						return;
 					}
@@ -127,7 +127,7 @@ const _wxWriteBLECharacteristicValue = ({
 			serviceId,
 			characteristicId,
 			value,
-			//writeType: 'writeNoResponse',
+			writeType: 'writeNoResponse',
 			//writeType: 'write',
 			success: function() {
 				resolve(true);
