@@ -160,12 +160,21 @@ const _writeBLECharacteristicValue = async (deviceId, serviceId, characteristicI
 		if (element.byteLength === 0) break; // 表示已经发送完毕
 
 		// num % 100 == 0 && await sleep(100);
-		_wxWriteBLECharacteristicValue({
-			deviceId,
-			serviceId,
-			characteristicId,
-			value: element
-		});
+		if (uni.getDeviceInfo().platform === 'ohos') {
+            await _wxWriteBLECharacteristicValue({
+                deviceId,
+                serviceId,
+                characteristicId,
+                value: element
+            });
+        } else {
+            _wxWriteBLECharacteristicValue({
+                deviceId,
+                serviceId,
+                characteristicId,
+                value: element
+            });
+        }
 		count = count + element.byteLength;
 		num++;
 		// console.log("================count=" + count)
@@ -190,16 +199,26 @@ const _writeBLECharacteristicValueWithDataFC = async (device, value) => {
 			count = count + subData.byteLength;
 
 			dataFC.credit--;
-			_wxWriteBLECharacteristicValue({
-				deviceId: device.deviceId,
-				serviceId: device.serviceId,
-				characteristicId: device.writeCharacteristicId,
-				value: subData,
-			});
+            if (uni.getDeviceInfo().platform === 'ohos') {
+                await _wxWriteBLECharacteristicValue({
+                    deviceId: device.deviceId,
+                    serviceId: device.serviceId,
+                    characteristicId: device.writeCharacteristicId,
+                    value: subData,
+                });
+            } else {
+                _wxWriteBLECharacteristicValue({
+                    deviceId: device.deviceId,
+                    serviceId: device.serviceId,
+                    characteristicId: device.writeCharacteristicId,
+                    value: subData,
+                });
+            }
 			num++;
 		} else {
 			// 令牌用尽，等待令牌
 			await sleep(0);
+            // console.log('令牌用尽，等待令牌');
 		}
 	}
 	console.log('num--->', num);
@@ -310,7 +329,7 @@ const connect = async ({
 	});
 
 	// device.mtu = 20;
-	if (uni.getSystemInfoSync().platform === 'android') {
+	if (uni.getSystemInfoSync().platform === 'android' || uni.getSystemInfoSync().platform === 'ohos') {
 		uni.onBLEMTUChange(function (res) {
 			// device.mtu = res.mtu;
 			console.log('bluetooth mtu is', res.mtu)
@@ -341,8 +360,10 @@ const connect = async ({
 			const flag = data[0];
 			if (flag === 1) {
 				device.dataFC.credit += data[1];
+				// console.log('===流控更新，credit', data[1]);
 			} else if (flag === 2) {
 				device.dataFC.mtu = (data[2] << 8) + data[1]; // 低位在前，高位在后
+				// console.log('===流控更新，mtu', device.dataFC.mtu);
 			}
 			device.onDataFCValueChange && device.onDataFCValueChange(res);
 		}
