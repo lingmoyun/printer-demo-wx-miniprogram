@@ -1,7 +1,7 @@
 // pages/ble/ble.js
 const Bluetooth = require("../../util/bluetooth.js");
 const CPCL = require("../../util/CPCL.min.js");
-const HEX = require("../../util/HEX.min.js");
+const HEX = CPCL.Tools.HEX;
 const uni = wx;
 
 Page({
@@ -166,21 +166,24 @@ Page({
 
     // // === 大尺寸图片测试 ===
     // // 等待图片加载
+    // console.log(' ======> image.onload begin <=====');
     // await new Promise(resolve => {
     //   image.onload = resolve
-    //   image.src = 'https://lmy-file.oss-cn-hangzhou.aliyuncs.com/tmp/winford/test/a4_doc_300dpi.jpeg' // 要加载的图片 url
-    //   // image.src = 'https://lmy-file.oss-cn-hangzhou.aliyuncs.com/tmp/winford/test/a4_photo_300dpi.png' // 要加载的图片 url
+    //   image.src = 'http://lmy-file.oss-cn-hangzhou.aliyuncs.com/tmp/winford/test/a4_doc_203dpi.jpg' // 要加载的图片 url
+    //   // image.src = 'http://lmy-file.oss-cn-hangzhou.aliyuncs.com/tmp/winford/test/a4_doc_300dpi.jpeg' // 要加载的图片 url
+    //   // image.src = 'http://lmy-file.oss-cn-hangzhou.aliyuncs.com/tmp/winford/test/a4_photo_300dpi.png' // 要加载的图片 url
     // })
+    // console.log(' ======> image.onload end <=====');
     // // 清空画布
     // ctx.fillStyle = 'white'
     // ctx.fillRect(0, 0, width, height)
     // // 把图片画到离屏 canvas 上
     // // 原图尺寸
-    // // ctx.drawImage(image, 0, 0, image.width, image.height) // 原图尺寸
-    // // return ctx.getImageData(0, 0, image.width, image.height) // 获取画完后的数据
-    // // 缩放到画布尺寸(非等比，强制拉伸)
-    // // ctx.drawImage(image, 0, 0, width, height) // 缩放到画布尺寸(非等比)
-    // // return ctx.getImageData(0, 0, width, height) // 获取画完后的数据
+    // ctx.drawImage(image, 0, 0, image.width, image.height) // 原图尺寸
+    // return ctx.getImageData(0, 0, image.width, image.height) // 获取画完后的数据
+    // 缩放到画布尺寸(非等比，强制拉伸)
+    // ctx.drawImage(image, 0, 0, width, height) // 缩放到画布尺寸(非等比)
+    // return ctx.getImageData(0, 0, width, height) // 获取画完后的数据
     // // 等比例缩放到画布尺寸
     // const ratio = Math.min(width / image.width, height / image.height);
     // const targetWidth = Math.floor(image.width * ratio);
@@ -246,19 +249,24 @@ Page({
     // 构建CPCL指令，更多使用方式见cpcl-sdk-demo-js，下载地址：http://open.lingmoyun.com/#/sdkDownload
     console.log('cpcl start => ', new Date());
     const dpi = 203; // 打印机DPI
+    // const dpi = 300; // 打印机DPI
     // 构建CPCL指令               整体偏移量 高度 打印份数
     let cpcl = CPCL.Builder.createArea(0, 2376, 1) // ! 0 203 203 2376 1\n
+    // let cpcl = CPCL.Builder.createArea(0, 3508, 1) // ! 0 203 203 2376 1\n
       // 任务ID，这里传什么打印结果会原样携带返回，部分打印机支持
       .taskId('1')
       // 固定写法，无需修改
       .pageWidth(dpi == 203 ? 1728 : 2592)
+      // 设置图片二值化阈值，数值越大黑点越多，数值越小黑点越少
+      //.imageThreshold(150)
       // 打印图片 Canvas的ImageData x y
       .imageGG(canvasImageData, 0, 0) // 小程序调试模式下比较耗时，体验版、正式版正常。
       .formPrint() // FORM\nPRINT\n
       .build();
     console.log('cpcl finish => ', new Date());
     console.log('cpcl => ', cpcl.byteLength);
-    console.log(HEX.ab2hex(cpcl))
+    // console.log(HEX.ab2hex(cpcl))
+    // console.log(HEX.ab2base64(cpcl));
     uni.hideLoading();
     return cpcl;
   },

@@ -2,7 +2,7 @@
  * Create by Winford
  */
 
-//const HEX = require('./HEX.min.js');
+// const HEX = require('./CPCL.min.js').Tools.HEX;
 const uni = wx;
 
 // 请求权限蓝牙
